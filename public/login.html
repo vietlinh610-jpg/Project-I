@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/login.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+
+<body class="login">
+    <div class="wrapper">
+        <form id="loginForm">
+            <h1>Login</h1>
+            <div class="input-box">
+                <i class='bx  bxs-user'></i> 
+                <input type="text"id="username" placeholder="Username"
+                required>
+            </div>
+
+            <div class="input-box">
+                <i class='bx  bxs-lock'></i> 
+                <input type="password" id = "password" placeholder="Password" 
+                required>
+                <i class='bx bxs-hide' id="togglePassword"></i>
+                
+            </div>
+
+            <div class="remember-forgot">
+                <label><input type="checkbox">Remember me</label>
+                <a href="#">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="btn">Login</button>
+        </form>
+    </div>
+    
+    <script src="js/login.js"></script>
+</body>
+</html>

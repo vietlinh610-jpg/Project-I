@@ -1,0 +1,284 @@
+const Hoc_Sinh = require('../models/hocsinh.model');
+const { sql, connectDB } = require('../config/db');
+
+// --- 1. LẤY DANH SÁCH TẤT CẢ HỌC SINH ---
+const getDanhSachHocSinh = async (req, res) => {
+    try {
+        const pool = await connectDB();
+        // Join thêm bảng Lop để lấy tên lớp hiển thị cho đẹp
+        const result = await pool.request().query`
+            SELECT HS.*, L.Ten_Lop, DN.Ten_TK 
+            FROM Hoc_Sinh HS
+            LEFT JOIN Lop L ON HS.Ma_Lop = L.Ma_Lop
+            LEFT JOIN Dang_Nhap DN ON HS.Ma_HS = DN.Ma_TK
+            ORDER BY HS.Ten_HS ASC
+        `;
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Lỗi getDanhSachHocSinh:', error);
+        res.status(500).json({ message: 'Lỗi server', error });
+    }
+};
+
+// --- 2. LẤY CHI TIẾT 1 HỌC SINH ---
+const getThongtinHS = async (req, res) => {
+    const { maHS } = req.params;
+    try {
+        const pool = await connectDB();
+        const result = await pool.request().query`
+            SELECT
+                hs.Ten_HS, hs.Ma_HS, hs.Ngay_Sinh, hs.Gioi_Tinh, hs.Email, hs.SDT,
+                gv.Ten_GV, l.Ten_Lop, l.Ma_Lop,
+                dn.Ten_TK
+            FROM Hoc_Sinh hs
+            LEFT JOIN Lop l On hs.Ma_Lop = l.Ma_Lop
+            LEFT JOIN Giao_Vien gv On l.Ma_GVCN = gv.Ma_GV
+            LEFT JOIN Dang_Nhap dn ON hs.Ma_HS = dn.Ma_TK
+            WHERE hs.Ma_HS = ${maHS}
+        `;
+        if (result.recordset.length > 0) {
+            res.json(result.recordset[0]);
+        } else {
+            res.status(404).json({ message: 'Không tìm thấy học sinh này' });
+        }
+    } catch (error) {
+        console.error('Lỗi getThongtinHS:', error);
+        res.status(500).json({ message: 'Lỗi server', error });
+    }
+};
+
+// --- 3. LẤY BẢNG ĐIỂM ---
+const getBangDiemCaNhan = async (req, res) => {
+    const { maHS } = req.params;
+    try {
+        const pool = await connectDB();
+        const result = await pool.request().query`
+            SELECT 
+                mh.Ten_MH, hk.Ten_HK,
+                d.Diem_Mieng, d.Diem_15P, d.Diem_45P, d.Diem_GK, d.Diem_CK, d.Diem_TK
+            FROM Diem d
+            JOIN Mon_Hoc mh On d.Ma_MH = mh.Ma_MH
+            JOIN Hoc_Ky hk On d.Ma_HK = hk.Ma_HK
+            WHERE d.Ma_HS = ${maHS}
+        `;
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Lỗi getBangDiemCaNhan:', error);
+        res.status(500).json({ message: 'Lỗi server', error });
+    }
+}
+
+// --- 4. LẤY HỌC SINH THEO LỚP ---
+const getHocSinhTheoLop = async (req, res) => {
+    const { maLop } = req.params;
+    try {
+        const pool = await connectDB();
+        const result = await pool.request().query`
+            SELECT HS.*, DN.Ten_TK,l.Ten_Lop
+            FROM Hoc_Sinh HS
+            LEFT JOIN Dang_Nhap DN ON HS.Ma_HS = DN.Ma_TK
+            JOIN Lop l ON hs.Ma_Lop = l.Ma_Lop
+            WHERE HS.Ma_Lop = ${maLop}
+        `;
+        res.json(result.recordset);
+    } catch (error) {
+        console.error('Lỗi getHocSinhTheoLop:', error);
+        res.status(500).json({ message: 'Lỗi server', error });
+    }
+};
+
+// --- 5. THÊM HỌC SINH (ĐÃ SỬA LỖI DUPLICATE PARAM) ---
+const themHocSinh = async (req, res) => {
+    const { Ma_HS, Ten_TK, Ten_HS, Ngay_Sinh, Gioi_Tinh, Email, SDT, Ma_Lop } = req.body;
+
+    // --- VALIDATION ---
+    if (!Ma_HS || !Ten_TK || !Ten_HS || !SDT || !Ma_Lop) {
+        return res.status(400).json({ message: 'Thiếu thông tin bắt buộc!' });
+    }
+    if (!Ma_HS.toUpperCase().startsWith("HS")) {
+        return res.status(400).json({ message: `Mã Học Sinh '${Ma_HS}' không hợp lệ. Phải bắt đầu bằng 'HS'.` });
+    }
+    if (SDT.length > 10) {
+        return res.status(400).json({ message: `SĐT quá dài (${SDT.length} ký tự). Tối đa 10 số.` });
+    }
+
+    let pool;
+    let transaction;
+
+    try {
+        pool = await connectDB();
+
+        // Kiểm tra Lớp (Không cần transaction cho lệnh SELECT này)
+        const checkLop = await pool.request().query`SELECT Ma_Lop FROM Lop WHERE Ma_Lop = ${Ma_Lop}`;
+        if (checkLop.recordset.length === 0) {
+            return res.status(400).json({ message: `Lớp '${Ma_Lop}' không tồn tại!` });
+        }
+
+        // --- BẮT ĐẦU TRANSACTION ---
+        transaction = new sql.Transaction(pool);
+        await transaction.begin();
+
+        // B1: Tạo tài khoản (Dùng request1)
+        console.log("1. Đang tạo tài khoản...");
+        const request1 = new sql.Request(transaction); // <--- TẠO REQUEST 1
+        await request1.query`
+            INSERT INTO Dang_Nhap (Ma_TK, Ten_TK, Mat_Khau, Loai_TK)
+            VALUES (${Ma_HS}, ${Ten_TK}, ${SDT}, 'HocSinh')
+        `;
+
+        // B2: Tạo hồ sơ (Dùng request2)
+        console.log("2. Đang tạo hồ sơ...");
+        const finalNgaySinh = Ngay_Sinh ? Ngay_Sinh : null;
+        
+        const request2 = new sql.Request(transaction); // <--- QUAN TRỌNG: TẠO REQUEST 2 MỚI TINH
+        await request2.query`
+            INSERT INTO Hoc_Sinh (Ma_HS, Ma_Lop, Ten_HS, Ngay_Sinh, Gioi_Tinh, Email, SDT)
+            VALUES (${Ma_HS}, ${Ma_Lop}, ${Ten_HS}, ${finalNgaySinh}, ${Gioi_Tinh}, ${Email}, ${SDT})
+        `;
+
+        // CHỐT ĐƠN
+        await transaction.commit();
+        console.log("✅ Thêm thành công:", Ma_HS);
+        res.json({ success: true, message: 'Thêm học sinh thành công!' });
+
+    } catch (error) {
+        if (transaction && transaction._aborted === false) await transaction.rollback();
+        
+        console.error("❌ Lỗi Thêm HS:", error);
+        
+        if (error.number === 2627 || error.number === 2601) {
+            return res.status(409).json({ message: 'Trùng lặp: Mã Học Sinh hoặc Tên Đăng Nhập đã tồn tại!' });
+        }
+        if (error.number === 547) {
+            return res.status(400).json({ message: 'Lỗi ràng buộc dữ liệu (Check Mã Lớp hoặc Quy tắc đặt mã).' });
+        }
+
+        res.status(500).json({ message: 'Lỗi hệ thống', error: error.message });
+    }
+};
+
+// --- 6. SỬA HỌC SINH ---
+const suaHocSinh = async (req, res) => {
+    const { id } = req.params; 
+    const { Ten_TK, Ten_HS, Ngay_Sinh, Gioi_Tinh, Email, SDT } = req.body;
+
+    // Validate SĐT khi sửa
+    if (SDT && SDT.length > 10) {
+        return res.status(400).json({ message: 'SĐT tối đa 10 số.' });
+    }
+
+    let pool; 
+    let transaction;
+    try {
+        pool = await connectDB();
+        transaction = new sql.Transaction(pool);
+        await transaction.begin();
+
+        const request = new sql.Request(transaction);
+
+        // B1: Cập nhật Học Sinh
+        await request.query`
+            UPDATE Hoc_Sinh
+            SET Ten_HS = ${Ten_HS},
+                Ngay_Sinh = ${Ngay_Sinh || null}, 
+                Gioi_Tinh = ${Gioi_Tinh},
+                Email = ${Email},
+                SDT = ${SDT}
+            WHERE Ma_HS = ${id}
+        `;
+
+        // B2: Cập nhật Tên Đăng Nhập (nếu có thay đổi)
+        if (Ten_TK && Ten_TK.trim() !== "") {
+            await request.query`
+                UPDATE Dang_Nhap
+                SET Ten_TK = ${Ten_TK}
+                WHERE Ma_TK = ${id}
+            `;
+        }
+
+        await transaction.commit();
+        res.json({ success: true, message: 'Cập nhật thành công!' });
+
+    } catch (error) {
+        if (transaction && transaction._aborted === false) await transaction.rollback();
+        console.error("❌ Lỗi Sửa HS:", error); 
+        res.status(500).json({ message: 'Lỗi cập nhật: ' + error.message });
+    }
+};
+
+// --- 7. XÓA HỌC SINH ---
+const xoaHocSinh = async (req, res) => {
+    const { id } = req.params;
+
+    let pool;
+    let transaction;
+    try {
+        pool = await connectDB();
+        
+        // Kiểm tra xem HS có điểm chưa (Nếu có điểm thì không xóa được do ràng buộc khóa ngoại)
+        const checkDiem = await pool.request().query`SELECT * FROM Diem WHERE Ma_HS = ${id}`;
+        if(checkDiem.recordset.length > 0) {
+            return res.status(400).json({ message: 'Học sinh này đã có bảng điểm, không thể xóa!' });
+        }
+
+        transaction = new sql.Transaction(pool);
+        await transaction.begin();
+        const request = new sql.Request(transaction);
+
+        // B1: Xóa Học Sinh trước (Con)
+        await request.query`DELETE FROM Hoc_Sinh WHERE Ma_HS = ${id}`;
+
+        // B2: Xóa Tài Khoản sau (Cha)
+        await request.query`DELETE FROM Dang_Nhap WHERE Ma_TK = ${id}`;
+
+        await transaction.commit();
+        res.json({ success: true, message: 'Đã xóa thành công!' });
+
+    } catch (error) {
+        if(transaction && transaction._aborted === false) await transaction.rollback();
+        console.error("❌ Lỗi xóa:", error);
+        res.status(500).json({ message: "Lỗi không thể xóa", error: error.message });
+    }
+};
+
+// --- CÁC HÀM TIỆN ÍCH KHÁC ---
+const roiLop = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const pool = await connectDB();
+        await pool.request().query`UPDATE Hoc_Sinh SET Ma_Lop = NULL WHERE Ma_HS = ${id}`;
+        res.json({ message: 'Đã đưa học sinh ra khỏi lớp!' });
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi server', error });
+    }
+};
+
+const themVaoLop = async (req, res) => {
+    const { Ma_HS, Ma_Lop } = req.body;
+    try {
+        const pool = await connectDB();
+        
+        // Kiểm tra Lớp tồn tại
+        const checkLop = await pool.request().query`SELECT Ma_Lop FROM Lop WHERE Ma_Lop = ${Ma_Lop}`;
+        if (checkLop.recordset.length === 0) {
+            return res.status(400).json({ message: 'Mã lớp không tồn tại!' });
+        }
+
+        await pool.request().query`UPDATE Hoc_Sinh SET Ma_Lop = ${Ma_Lop} WHERE Ma_HS = ${Ma_HS}`;
+        res.json({ message: 'Đã thêm học sinh vào lớp thành công!' });
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi server', error });
+    }
+};
+
+module.exports = {
+    getDanhSachHocSinh,
+    getBangDiemCaNhan,
+    getThongtinHS,
+    getHocSinhTheoLop,
+    themHocSinh,
+    suaHocSinh,
+    xoaHocSinh,
+    roiLop,
+    themVaoLop
+};

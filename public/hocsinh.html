@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Lớp Chủ Nhiệm</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .table th { vertical-align: middle; white-space: nowrap; background-color: #f8f9fa; }
+        .table td { vertical-align: middle; }
+        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
+        .navbar-brand { font-weight: bold; letter-spacing: 1px; }
+        .badge { font-size: 0.85rem; padding: 0.5em 0.8em; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark mb-4 shadow">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1">🛡️ QUẢN LÝ LỚP HỌC</span>
+            <button onclick="dangXuat()" class="btn btn-outline-light btn-sm fw-bold">Đăng Xuất</button>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-primary fw-bold text-uppercase" id="tieu-de-lop">
+                <i class="fas fa-users me-2"></i>Đang tải dữ liệu...
+            </h3>
+            <button class="btn btn-secondary fw-bold shadow-sm" onclick="window.location.href='giaovien.html'">
+                <i class="fas fa-arrow-left me-2"></i>Quay Lại
+            </button>
+        </div>
+
+        <div class="card mb-4 shadow-sm border-0">
+            <div class="card-body bg-white rounded">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <label class="fw-bold text-muted small mb-1">Thêm học sinh vào lớp bằng mã:</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-id-card"></i></span>
+                            <input type="text" id="txtMaHSToAdd" class="form-control" placeholder="Nhập Mã HS cần thêm (VD: HS001)...">
+                            <button class="btn btn-success fw-bold px-4" onclick="themHocSinhVaoLop()">
+                                <i class="fas fa-user-plus me-1"></i>Thêm Vào Lớp
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white fw-bold d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list me-2"></i>Danh Sách Thành Viên Trong Lớp</span>
+                <span id="si-so-lop" class="badge bg-light text-primary">Sĩ số: 0</span>
+            </div>
+            <div class="card-body p-0 overflow-auto">
+                <table class="table table-hover table-striped mb-0 text-center table-bordered">
+                    <thead>
+                        <tr>
+                            <th class="py-3">Mã HS</th>
+                            <th class="py-3 text-start">Họ Tên</th>
+                            <th class="py-3">Ngày Sinh</th>
+                            <th class="py-3">Giới Tính</th>
+                            <th class="py-3">Email</th>
+                            <th class="py-3">SĐT</th>
+                            <th class="py-3">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bang-du-lieu" class="align-middle">
+                        <tr><td colspan="7" class="py-5 text-muted italic">Đang tải danh sách học sinh...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Lấy mã lớp từ bộ nhớ (được lưu từ trang giaovien.html)
+        const maLopCN = localStorage.getItem('selectedClass');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Chặn truy cập trái phép
+            if(!maLopCN) {
+                alert('Vui lòng chọn lớp từ trang Giáo Viên!');
+                window.location.href = 'giaovien.html';
+                return;
+            }
+            
+            // Hiển thị tạm thời Mã lớp
+            document.getElementById('tieu-de-lop').innerHTML = `<i class="fas fa-users me-2"></i>DANH SÁCH LỚP ${maLopCN}`;
+            layDanhSachHocSinh();
+        });
+
+        async function layDanhSachHocSinh() {
+            try {
+                // Gọi API lấy danh sách học sinh theo mã lớp
+                const response = await fetch(`/api/hocsinh/lop/${maLopCN}`);
+                const data = await response.json();
+                const tableBody = document.getElementById('bang-du-lieu');
+                tableBody.innerHTML = ''; 
+
+                if (!data || data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="py-5 text-muted italic">Lớp chưa có học sinh nào. Hãy nhập mã để thêm học sinh.</td></tr>';
+                    document.getElementById('si-so-lop').innerText = `Sĩ số: 0`;
+                    return;
+                }
+
+                // CẬP NHẬT TIÊU ĐỀ: Lấy Tên Lớp thật từ bản ghi đầu tiên trả về
+                const tenLopHienThi = data[0].Ten_Lop || maLopCN;
+                document.getElementById('tieu-de-lop').innerHTML = `<i class="fas fa-users me-2"></i>DANH SÁCH LỚP ${tenLopHienThi}`;
+                document.getElementById('si-so-lop').innerText = `Sĩ số: ${data.length}`;
+
+                // Render dữ liệu vào bảng
+                data.forEach(hs => {
+                    let ngaySinhStr = hs.Ngay_Sinh ? new Date(hs.Ngay_Sinh).toLocaleDateString('vi-VN') : '---';
+                    tableBody.innerHTML += `
+                        <tr>
+                            <td class="fw-bold text-secondary">${hs.Ma_HS}</td>
+                            <td class="text-start ps-3 fw-bold text-dark">${hs.Ten_HS}</td>
+                            <td>${ngaySinhStr}</td>
+                            <td><span class="badge ${hs.Gioi_Tinh === 'Nam' ? 'bg-primary shadow-sm' : 'bg-danger shadow-sm'}">${hs.Gioi_Tinh}</span></td>
+                            <td class="text-muted small">${hs.Email || '---'}</td>
+                            <td>${hs.SDT || '---'}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger fw-bold" onclick="choRoiLop('${hs.Ma_HS}')">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Rời Lớp
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Lỗi:', error);
+                alert('Không thể kết nối đến Server!');
+            }
+        }
+
+        async function themHocSinhVaoLop() {
+            const maHS = document.getElementById('txtMaHSToAdd').value.trim();
+            if (!maHS) return alert("Vui lòng nhập Mã Học Sinh!");
+
+            try {
+                const res = await fetch('/api/hocsinh/them-vao-lop', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ Ma_HS: maHS, Ma_Lop: maLopCN })
+                });
+                const data = await res.json();
+                if(res.ok){
+                    alert("✅ " + data.message);
+                    document.getElementById('txtMaHSToAdd').value = '';
+                    layDanhSachHocSinh(); // Tải lại bảng ngay lập tức
+                } else {
+                    alert("❌ " + data.message);
+                }
+            } catch (error){
+                alert("Lỗi kết nối máy chủ");
+            }
+        }
+
+        async function choRoiLop(maHS) {
+            if(!confirm(`Xác nhận đưa học sinh ${maHS} rời khỏi lớp hiện tại?`)) return;
+            try {
+                const res = await fetch(`/api/hocsinh/roi-lop/${maHS}`, { method: 'PUT' });
+                const data = await res.json();
+                if(res.ok){
+                    alert("✅ " + data.message);
+                    layDanhSachHocSinh(); // Cập nhật lại danh sách
+                } else {
+                    alert("❌ " + data.message);
+                }
+            } catch (error){
+                alert("Lỗi kết nối máy chủ");
+            }
+        }
+
+        function dangXuat() {
+            if(confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

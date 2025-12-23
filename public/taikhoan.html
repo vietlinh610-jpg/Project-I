@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <title>Quản Lý Tài Khoản</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        .option-card { 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            height: 180px; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            border: none;
+        }
+        .option-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important; }
+        .hidden { display: none !important; }
+        .table th, .table td { vertical-align: middle; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark mb-4 shadow">
+        <div class="container">
+            <span class="navbar-brand fw-bold">🛡️ TRANG QUẢN TRỊ (ADMIN)</span>
+            <button onclick="dangXuat()" class="btn btn-outline-light btn-sm fw-bold">Đăng Xuất</button>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-primary fw-bold text-uppercase">
+                <i class="fas fa-user-cog me-2"></i> Quản Lý Tài Khoản
+            </h3>
+            
+            <button class="btn btn-secondary" id="btn-back" onclick="xuLyQuayLai()">
+                <i class="fas fa-arrow-left me-2"></i>Quay Lại
+            </button>
+        </div>
+
+        <div id="view-main" class="row g-4">
+            <div class="col-md-6">
+                <div class="card bg-success text-white option-card shadow rounded-4" onclick="hienThiGV()">
+                    <i class="fas fa-chalkboard-teacher fa-4x mb-3"></i>
+                    <h4 class="fw-bold">GIÁO VIÊN</h4>
+                    <span>Quản lý mật khẩu GV</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-warning text-dark option-card shadow rounded-4" onclick="hienThiDSClass()">
+                    <i class="fas fa-user-graduate fa-4x mb-3"></i>
+                    <h4 class="fw-bold">HỌC SINH</h4>
+                    <span>Quản lý mật khẩu HS theo lớp</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-gv" class="hidden">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white fw-bold">
+                    <i class="fas fa-list me-2"></i> Danh Sách Tài Khoản Giáo Viên
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover table-striped mb-0 text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-3">Mã GV</th>
+                                <th class="py-3">Họ Tên</th>
+                                <th class="py-3">Tài Khoản</th>
+                                <th class="py-3">Mật Khẩu Mới</th>
+                                <th class="py-3">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bang-gv"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-chonlop" class="hidden">
+            <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center" role="alert">
+                <i class="fas fa-info-circle me-2 fs-4"></i>
+                <div>Vui lòng chọn một lớp để xem danh sách tài khoản học sinh.</div>
+            </div>
+            <div id="list-lop" class="row g-3"></div>
+        </div>
+
+        <div id="view-hs" class="hidden">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-info text-white fw-bold d-flex justify-content-between align-items-center">
+                    <span id="title-lop"><i class="fas fa-users me-2"></i> Tài Khoản Lớp ...</span>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover table-striped mb-0 text-center">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-3">Mã HS</th>
+                                <th class="py-3">Họ Tên</th>
+                                <th class="py-3">Tài Khoản</th>
+                                <th class="py-3">Mật Khẩu Mới</th>
+                                <th class="py-3">Thao Tác</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bang-hs"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div> 
+
+    <script>
+        // --- 1. ĐIỀU HƯỚNG ---
+        function xuLyQuayLai() {
+            const mainHidden = document.getElementById('view-main').classList.contains('hidden');
+            if (!mainHidden) {
+                history.back();
+            } else {
+                veManHinhChinh();
+            }
+        }
+
+        function hideAll() {
+            document.getElementById('view-main').classList.add('hidden');
+            document.getElementById('view-gv').classList.add('hidden');
+            document.getElementById('view-chonlop').classList.add('hidden');
+            document.getElementById('view-hs').classList.add('hidden');
+        }
+
+        function veManHinhChinh() {
+            hideAll();
+            document.getElementById('view-main').classList.remove('hidden');
+        }
+
+        // --- 2. HIỂN THỊ GIÁO VIÊN ---
+        async function hienThiGV() {
+            hideAll();
+            document.getElementById('view-gv').classList.remove('hidden');
+            
+            try {
+                const res = await fetch('/api/auth/giaovien');
+                if (!res.ok) throw new Error("Lỗi tải dữ liệu");
+                const data = await res.json();
+
+                document.getElementById('bang-gv').innerHTML = data.map(u => `
+                    <tr>
+                        <td class="fw-bold text-secondary">${u.Ma_GV}</td>
+                        <td class="fw-bold">${u.Ten_GV}</td>
+                        <td class="text-primary">${u.Ten_TK}</td>
+                        <td>
+                            <input type="text" value="${u.Mat_Khau}" id="pass-${u.Ma_GV}" 
+                                   class="form-control form-control-sm text-center" 
+                                   style="max-width: 150px; margin: 0 auto;" 
+                                   placeholder="Nhập pass mới">
+                        </td>
+                        <td>
+                            <button class="btn btn-success btn-sm" onclick="luuMatKhau('${u.Ma_GV}', 'GV')">
+                                <i class="fas fa-save me-1"></i> Lưu
+                            </button>
+                        </td>
+                    </tr>`).join('');
+            } catch (e) {
+                console.error(e);
+                alert("Không thể tải danh sách giáo viên: " + e.message);
+            }
+        }
+
+        // --- 3. HIỂN THỊ DANH SÁCH LỚP ---
+        async function hienThiDSClass() {
+            hideAll();
+            document.getElementById('view-chonlop').classList.remove('hidden');
+            
+            try {
+                const res = await fetch('/api/lop');
+                const data = await res.json();
+                document.getElementById('list-lop').innerHTML = data.map(l => `
+                    <div class="col-md-3 col-sm-6">
+                        <div class="card p-3 text-center shadow-sm border-0 h-100 option-card bg-white" 
+                             onclick="hienThiHS('${l.Ma_Lop}')">
+                            <h5 class="text-primary fw-bold mb-1">${l.Ten_Lop}</h5>
+                            <small class="text-muted"><i class="fas fa-user-tie me-1"></i> ${l.Ten_GVCN || 'Chưa có'}</small>
+                        </div>
+                    </div>`).join('');
+            } catch (e) {
+                alert("Lỗi tải danh sách lớp!");
+            }
+        }
+
+        // --- 4. HIỂN THỊ HỌC SINH ---
+        async function hienThiHS(maLop) {
+            hideAll();
+            document.getElementById('view-hs').classList.remove('hidden');
+            document.getElementById('title-lop').innerHTML = `<i class="fas fa-users me-2"></i> Tài Khoản Lớp ${maLop}`;
+            
+            try {
+                const res = await fetch(`/api/auth/hocsinh/${maLop}`);
+                const data = await res.json();
+                
+                if(data.length === 0) {
+                    document.getElementById('bang-hs').innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted fst-italic">Lớp này chưa có học sinh nào.</td></tr>';
+                    return;
+                }
+
+                document.getElementById('bang-hs').innerHTML = data.map(u => `
+                    <tr>
+                        <td class="fw-bold text-secondary">${u.Ma_HS}</td>
+                        <td class="fw-bold">${u.Ten_HS}</td>
+                        <td class="text-info">${u.Ten_TK}</td>
+                        <td>
+                            <input type="text" value="${u.Mat_Khau}" id="pass-${u.Ma_HS}" 
+                                   class="form-control form-control-sm text-center" 
+                                   style="max-width: 150px; margin: 0 auto;"
+                                   placeholder="Nhập pass mới">
+                        </td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="luuMatKhau('${u.Ma_HS}', 'HS')">
+                                <i class="fas fa-save me-1"></i> Lưu
+                            </button>
+                        </td>
+                    </tr>`).join('');
+            } catch (e) {
+                alert("Lỗi tải danh sách học sinh!");
+            }
+        }
+
+        // --- 5. LƯU MẬT KHẨU ---
+        async function luuMatKhau(id, role) {
+            const passMoi = document.getElementById(`pass-${id}`).value.trim();
+            
+            if(!passMoi) return alert("⚠️ Mật khẩu không được để trống!");
+            if(!confirm(`Bạn có chắc chắn muốn đổi mật khẩu cho tài khoản ${id}?`)) return;
+
+            try {
+                const res = await fetch('/api/auth/update', {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ maTK: id, matKhauMoi: passMoi, role: role })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    alert("✅ " + (data.message || "Cập nhật thành công!"));
+                } else {
+                    alert("❌ Lỗi: " + (data.message || "Không thể cập nhật"));
+                }
+            } catch (err) { 
+                console.error(err);
+                alert("❌ Lỗi kết nối đến máy chủ!"); 
+            }
+        }
+
+        // --- 6. ĐĂNG XUẤT ---
+        function dangXuat() {
+            if(confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+    </script>
+</body>
+</html>

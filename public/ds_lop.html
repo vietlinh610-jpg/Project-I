@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Lớp Học</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-dark bg-dark mb-4 shadow">
+        <div class="container">
+            <span class="navbar-brand fw-bold">🛡️ TRANG QUẢN TRỊ (ADMIN)</span>
+            <button onclick="dangXuat()" class="btn btn-outline-light btn-sm fw-bold">Đăng Xuất</button>
+        </div>
+    </nav>
+
+    <div class="container">
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="text-primary fw-bold text-uppercase">
+                <i class="fas fa-school me-2"></i> Quản Lý Lớp Học
+            </h3>
+            
+            <button class="btn btn-secondary" onclick="history.back()">
+                <i class="fas fa-arrow-left me-2"></i>Quay Lại
+            </button>
+        </div>
+
+        <div class="mb-3 d-flex justify-content-end">
+            <button class="btn btn-success fw-bold shadow-sm" onclick="openModal()">
+                <i class="fas fa-plus me-1"></i> Thêm Lớp Mới
+            </button>
+        </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-primary text-white fw-bold">
+                <i class="fas fa-list me-2"></i> Danh Sách Lớp Học
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover table-striped mb-0 text-center align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="py-3">Mã Lớp</th>
+                            <th class="py-3">Tên Lớp</th>
+                            <th class="py-3">GV Chủ Nhiệm</th>
+                            <th class="py-3">Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bang"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="modalLop" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="modalTitle">Thêm Lớp Mới</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="lop-id-old">
+
+                    <div class="mb-3">
+                        <label class="fw-bold small text-muted">Mã Lớp:</label>
+                        <input id="input-ma" class="form-control" placeholder="VD: L10A1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold small text-muted">Tên Lớp:</label>
+                        <input id="input-ten" class="form-control" placeholder="VD: 10A1">
+                    </div>
+                    <div class="mb-3">
+                        <label class="fw-bold small text-muted">Mã GVCN:</label>
+                        <input id="input-gv" class="form-control" placeholder="Nhập mã GV (VD: GV001)">
+                        <small class="text-danger fst-italic">* Mã GVCN phải tồn tại trong hệ thống.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="luuLop()">Lưu Dữ Liệu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Khởi tạo Modal
+        const myModal = new bootstrap.Modal(document.getElementById('modalLop'));
+        let isEdit = false; // Biến kiểm tra đang Thêm hay Sửa
+
+        // --- 1. Tải danh sách ---
+        async function load() {
+            try {
+                const res = await fetch('/api/lop');
+                const data = await res.json();
+                
+                document.getElementById('bang').innerHTML = data.map(l => `
+                    <tr>
+                        <td class="fw-bold text-secondary">${l.Ma_Lop}</td>
+                        <td class="fw-bold text-primary">${l.Ten_Lop}</td>
+                        <td>
+                            ${l.Ten_GVCN 
+                                ? `<span class="badge bg-success bg-opacity-10 text-success px-3 py-2">${l.Ten_GVCN}</span>` 
+                                : (l.Ma_GVCN ? l.Ma_GVCN : '<span class="badge bg-danger bg-opacity-10 text-danger">Chưa có</span>')}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" 
+                                onclick="openEditModal('${l.Ma_Lop}', '${l.Ten_Lop}', '${l.Ma_GVCN || ''}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="xoaLop('${l.Ma_Lop}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) { console.error("Lỗi tải dữ liệu:", err); }
+        }
+
+        // --- 2. Mở Modal Thêm ---
+        function openModal() {
+            isEdit = false;
+            document.getElementById('modalTitle').innerText = "Thêm Lớp Mới";
+            document.getElementById('input-ma').value = "";
+            document.getElementById('input-ma').disabled = false; // Cho phép nhập mã
+            document.getElementById('input-ten').value = "";
+            document.getElementById('input-gv').value = "";
+            myModal.show();
+        }
+
+        // --- 3. Mở Modal Sửa (Nâng cấp từ prompt) ---
+        function openEditModal(ma, ten, gv) {
+            isEdit = true;
+            document.getElementById('modalTitle').innerText = "Sửa Thông Tin Lớp";
+            document.getElementById('lop-id-old').value = ma; // Lưu mã cũ
+            
+            document.getElementById('input-ma').value = ma;
+            document.getElementById('input-ma').disabled = true; // Không cho sửa mã lớp (primary key)
+            document.getElementById('input-ten').value = ten;
+            document.getElementById('input-gv').value = gv === 'null' ? '' : gv;
+            
+            myModal.show();
+        }
+
+        // --- 4. Lưu Dữ Liệu (Xử lý cả Thêm và Sửa) ---
+        async function luuLop() {
+            const ma = document.getElementById('input-ma').value.trim();
+            const ten = document.getElementById('input-ten').value.trim();
+            const gv = document.getElementById('input-gv').value.trim();
+
+            if(!ma || !ten) {
+                alert("Vui lòng nhập đầy đủ Mã lớp và Tên lớp!");
+                return;
+            }
+
+            // Xác định URL và Method dựa trên biến isEdit
+            const url = isEdit ? `/api/lop/${ma}` : '/api/lop';
+            const method = isEdit ? 'PUT' : 'POST';
+
+            const payload = {
+                Ma_Lop: ma,
+                Ten_Lop: ten,
+                Ma_GVCN: gv
+            };
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await res.json();
+                if (res.ok) {
+                    alert("✅ " + (data.message || "Thành công!"));
+                    myModal.hide(); // Đóng modal
+                    load(); // Tải lại bảng
+                } else {
+                    alert("❌ LỖI: " + data.message);
+                }
+            } catch (e) { alert("Lỗi kết nối server!"); }
+        }
+
+        // --- 5. Xóa Lớp ---
+        async function xoaLop(ma) {
+            if(confirm('⚠️ CẢNH BÁO: Bạn chắc chắn muốn xóa lớp này?\nDữ liệu học sinh trong lớp cũng sẽ bị ảnh hưởng.')) {
+                try {
+                    const res = await fetch(`/api/lop/${ma}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if(res.ok) {
+                        alert("✅ Đã xóa thành công!");
+                        load();
+                    } else {
+                        alert("❌ Lỗi: " + data.message);
+                    }
+                } catch (e) { alert("Lỗi kết nối server!"); }
+            }
+        }
+
+        // --- 6. Đăng xuất ---
+        function dangXuat() {
+            if(confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+                localStorage.clear();
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Chạy hàm load khi mở trang
+        load();
+    </script>
+</body>
+</html>
