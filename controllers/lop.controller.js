@@ -1,11 +1,11 @@
 const Lop = require('../models/lop.model');
 const { sql, connectDB } = require('../config/db');
 
-// 1. Lấy Tên Lớp và Tên Môn (Dùng cho giao diện nhập điểm)
+//  Lấy Tên Lớp và Tên Môn 
 const getTenLop = async (req, res) => {
     const { maLop, maMH } = req.query;
     try {
-        const pool = await connectDB(); // Lấy kết nối
+        const pool = await connectDB(); 
 
         const lopResult = await pool.request().query`
             SELECT Ten_Lop FROM Lop WHERE Ma_Lop=${maLop}
@@ -25,7 +25,6 @@ const getTenLop = async (req, res) => {
     }
 };
 
-// 2. Lấy danh sách lớp (Kèm tên GV chủ nhiệm)
 const getLop = async (req, res) => {
     try {
         const pool = await connectDB();
@@ -37,13 +36,11 @@ const getLop = async (req, res) => {
     } catch (e) { res.status(500).json(e); }
 };
 
-// 3. Tạo lớp mới
+//  Tạo lớp mới
 const themLop = async (req, res) => {
     const { Ma_Lop, Ten_Lop, Ma_GVCN } = req.body;
     try {
         const pool = await connectDB();
-        
-        // Kiểm tra GV có tồn tại không trước khi thêm
         const checkGV = await pool.request().query`SELECT * FROM Giao_Vien WHERE Ma_GV = ${Ma_GVCN}`;
         if (checkGV.recordset.length === 0) {
             return res.status(400).json({ message: 'Mã Giáo Viên không tồn tại! Hãy kiểm tra lại.' });
@@ -56,7 +53,6 @@ const themLop = async (req, res) => {
         res.json({ message: 'Tạo lớp thành công!' });
     } catch (e) { 
         console.error(e);
-        // Mã lỗi 2627 là trùng khóa chính (Trùng mã lớp)
         if (e.number === 2627) {
             return res.status(409).json({ message: 'Mã lớp này đã tồn tại!' });
         }
@@ -64,14 +60,12 @@ const themLop = async (req, res) => {
     }
 };
 
-// 4. Sửa lớp
+//  Sửa lớp
 const suaLop = async (req, res) => {
-    const { id } = req.params; // Mã lớp cũ
-    const { Ten_Lop, Ma_GVCN } = req.body; // Thông tin mới
+    const { id } = req.params; 
+    const { Ten_Lop, Ma_GVCN } = req.body; 
     try {
         const pool = await connectDB();
-        
-        // Kiểm tra GV
         const checkGV = await pool.request().query`SELECT * FROM Giao_Vien WHERE Ma_GV = ${Ma_GVCN}`;
         if (checkGV.recordset.length === 0) {
             return res.status(400).json({ message: 'Mã Giáo Viên không tồn tại!' });
@@ -89,7 +83,7 @@ const suaLop = async (req, res) => {
     }
 };
 
-// 5. Xóa lớp (Dùng Transaction để an toàn dữ liệu)
+//  Xóa lớp 
 const xoaLop = async (req, res) => {
     const { id } = req.params;
     
@@ -104,17 +98,12 @@ const xoaLop = async (req, res) => {
 
     try {
         await transaction.begin();
-        const request = new sql.Request(transaction);
-
-        // B1: Xóa Phân công liên quan đến lớp này
-        await request.query`DELETE FROM Phan_Cong WHERE Ma_Lop = ${id}`;
-
-        // B2: Cập nhật Học sinh trong lớp này về NULL (để không bị mất học sinh)
-        await request.query`UPDATE Hoc_Sinh SET Ma_Lop = NULL WHERE Ma_Lop = ${id}`;
-        
-        // B3: Xóa Lớp
-        await request.query`DELETE FROM Lop WHERE Ma_Lop = ${id}`;
-
+        const request1 = new sql.Request(transaction);
+        await request1.query`DELETE FROM Phan_Cong WHERE Ma_Lop = ${id}`;
+        const request2 = new sql.Request(transaction);
+        await request2.query`UPDATE Hoc_Sinh SET Ma_Lop = NULL WHERE Ma_Lop = ${id}`;
+        const request3 = new sql.Request(transaction);
+        await request3.query`DELETE FROM Lop WHERE Ma_Lop = ${id}`;
         await transaction.commit();
         res.json({ message: 'Đã xóa lớp và hủy phân công thành công!' });
 

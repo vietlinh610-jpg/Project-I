@@ -1,0 +1,14 @@
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05) !important;
+    transition: 0.3s;
+}
+
+.badge {
+    font-size: 0.85rem;
+    letter-spacing: 0.3px;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}

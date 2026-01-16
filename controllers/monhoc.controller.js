@@ -1,6 +1,6 @@
 const Mon_Hoc = require('../models/monhoc.model');
 const {sql,connectDB} = require('../config/db');
-
+//--- Lấy danh sách môn học---
 const getMon =  async(req,res) =>
 {
     try
@@ -17,6 +17,7 @@ const getMon =  async(req,res) =>
     }
 };
 
+// --- Thêm môn học mới---
 const themMon =  async(req,res) =>
 {
     const {Ma_MH,Ten_MH} = req.body;
@@ -32,6 +33,8 @@ const themMon =  async(req,res) =>
         res.status(500).json(error);
     }
 };
+
+// --- Xóa môn học---
 const xoaMon =  async(req,res) =>
 {
     const { id } = req.params;
@@ -47,10 +50,32 @@ const xoaMon =  async(req,res) =>
     {
         res.status(500).json(error);
     }
-}
+};
+
+const suaMon = async (req, res) => {
+    const { id } = req.params; 
+    const { Ten_MH } = req.body; 
+    try {
+        await connectDB();
+        const result = await sql.query`
+            UPDATE Mon_Hoc 
+            SET Ten_MH = ${Ten_MH} 
+            WHERE Ma_MH = ${id}
+        `;
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: "Không tìm thấy môn học để cập nhật" });
+        }
+        
+        res.json({ message: "Cập nhật thành công", result });
+    } catch (error) {
+        res.status(500).json(error);
+    }
+};
+
 
 module.exports = {
     getMon,
     themMon,
-    xoaMon
+    xoaMon,
+    suaMon
 };

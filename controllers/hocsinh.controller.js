@@ -1,11 +1,10 @@
 const Hoc_Sinh = require('../models/hocsinh.model');
 const { sql, connectDB } = require('../config/db');
 
-// --- 1. LẤY DANH SÁCH TẤT CẢ HỌC SINH ---
+// --- Lấy danh sách tất cả học sinh ---
 const getDanhSachHocSinh = async (req, res) => {
     try {
         const pool = await connectDB();
-        // Join thêm bảng Lop để lấy tên lớp hiển thị cho đẹp
         const result = await pool.request().query`
             SELECT HS.*, L.Ten_Lop, DN.Ten_TK 
             FROM Hoc_Sinh HS
@@ -20,7 +19,7 @@ const getDanhSachHocSinh = async (req, res) => {
     }
 };
 
-// --- 2. LẤY CHI TIẾT 1 HỌC SINH ---
+// --- Lấy thông tin học sinh ---
 const getThongtinHS = async (req, res) => {
     const { maHS } = req.params;
     try {
@@ -47,7 +46,7 @@ const getThongtinHS = async (req, res) => {
     }
 };
 
-// --- 3. LẤY BẢNG ĐIỂM ---
+// --- Lấy bảng điểm---
 const getBangDiemCaNhan = async (req, res) => {
     const { maHS } = req.params;
     try {
@@ -68,7 +67,7 @@ const getBangDiemCaNhan = async (req, res) => {
     }
 }
 
-// --- 4. LẤY HỌC SINH THEO LỚP ---
+// ---  Lấy danh sách học sinh theo lớp ---
 const getHocSinhTheoLop = async (req, res) => {
     const { maLop } = req.params;
     try {
@@ -87,11 +86,9 @@ const getHocSinhTheoLop = async (req, res) => {
     }
 };
 
-// --- 5. THÊM HỌC SINH (ĐÃ SỬA LỖI DUPLICATE PARAM) ---
+// --- Thêm học sinh  ---
 const themHocSinh = async (req, res) => {
     const { Ma_HS, Ten_TK, Ten_HS, Ngay_Sinh, Gioi_Tinh, Email, SDT, Ma_Lop } = req.body;
-
-    // --- VALIDATION ---
     if (!Ma_HS || !Ten_TK || !Ten_HS || !SDT || !Ma_Lop) {
         return res.status(400).json({ message: 'Thiếu thông tin bắt buộc!' });
     }
@@ -107,36 +104,27 @@ const themHocSinh = async (req, res) => {
 
     try {
         pool = await connectDB();
-
-        // Kiểm tra Lớp (Không cần transaction cho lệnh SELECT này)
         const checkLop = await pool.request().query`SELECT Ma_Lop FROM Lop WHERE Ma_Lop = ${Ma_Lop}`;
         if (checkLop.recordset.length === 0) {
             return res.status(400).json({ message: `Lớp '${Ma_Lop}' không tồn tại!` });
         }
-
-        // --- BẮT ĐẦU TRANSACTION ---
         transaction = new sql.Transaction(pool);
         await transaction.begin();
-
-        // B1: Tạo tài khoản (Dùng request1)
         console.log("1. Đang tạo tài khoản...");
-        const request1 = new sql.Request(transaction); // <--- TẠO REQUEST 1
+        const request1 = new sql.Request(transaction); 
         await request1.query`
             INSERT INTO Dang_Nhap (Ma_TK, Ten_TK, Mat_Khau, Loai_TK)
             VALUES (${Ma_HS}, ${Ten_TK}, ${SDT}, 'HocSinh')
         `;
 
-        // B2: Tạo hồ sơ (Dùng request2)
         console.log("2. Đang tạo hồ sơ...");
         const finalNgaySinh = Ngay_Sinh ? Ngay_Sinh : null;
         
-        const request2 = new sql.Request(transaction); // <--- QUAN TRỌNG: TẠO REQUEST 2 MỚI TINH
+        const request2 = new sql.Request(transaction);
         await request2.query`
             INSERT INTO Hoc_Sinh (Ma_HS, Ma_Lop, Ten_HS, Ngay_Sinh, Gioi_Tinh, Email, SDT)
             VALUES (${Ma_HS}, ${Ma_Lop}, ${Ten_HS}, ${finalNgaySinh}, ${Gioi_Tinh}, ${Email}, ${SDT})
         `;
-
-        // CHỐT ĐƠN
         await transaction.commit();
         console.log("✅ Thêm thành công:", Ma_HS);
         res.json({ success: true, message: 'Thêm học sinh thành công!' });
@@ -157,12 +145,10 @@ const themHocSinh = async (req, res) => {
     }
 };
 
-// --- 6. SỬA HỌC SINH ---
+// ---  SỬA HỌC SINH ---
 const suaHocSinh = async (req, res) => {
     const { id } = req.params; 
     const { Ten_TK, Ten_HS, Ngay_Sinh, Gioi_Tinh, Email, SDT } = req.body;
-
-    // Validate SĐT khi sửa
     if (SDT && SDT.length > 10) {
         return res.status(400).json({ message: 'SĐT tối đa 10 số.' });
     }
@@ -174,10 +160,9 @@ const suaHocSinh = async (req, res) => {
         transaction = new sql.Transaction(pool);
         await transaction.begin();
 
-        const request = new sql.Request(transaction);
+        const request1 = new sql.Request(transaction);
 
-        // B1: Cập nhật Học Sinh
-        await request.query`
+        await request1.query`
             UPDATE Hoc_Sinh
             SET Ten_HS = ${Ten_HS},
                 Ngay_Sinh = ${Ngay_Sinh || null}, 
@@ -186,10 +171,9 @@ const suaHocSinh = async (req, res) => {
                 SDT = ${SDT}
             WHERE Ma_HS = ${id}
         `;
-
-        // B2: Cập nhật Tên Đăng Nhập (nếu có thay đổi)
+        const request2 = new sql.Request(transaction);
         if (Ten_TK && Ten_TK.trim() !== "") {
-            await request.query`
+            await request2.query`
                 UPDATE Dang_Nhap
                 SET Ten_TK = ${Ten_TK}
                 WHERE Ma_TK = ${id}
@@ -205,8 +189,7 @@ const suaHocSinh = async (req, res) => {
         res.status(500).json({ message: 'Lỗi cập nhật: ' + error.message });
     }
 };
-
-// --- 7. XÓA HỌC SINH ---
+// ---  XÓA HỌC SINH (XÓA CẢ BẢNG ĐIỂM) ---
 const xoaHocSinh = async (req, res) => {
     const { id } = req.params;
 
@@ -214,34 +197,30 @@ const xoaHocSinh = async (req, res) => {
     let transaction;
     try {
         pool = await connectDB();
-        
-        // Kiểm tra xem HS có điểm chưa (Nếu có điểm thì không xóa được do ràng buộc khóa ngoại)
-        const checkDiem = await pool.request().query`SELECT * FROM Diem WHERE Ma_HS = ${id}`;
-        if(checkDiem.recordset.length > 0) {
-            return res.status(400).json({ message: 'Học sinh này đã có bảng điểm, không thể xóa!' });
-        }
-
         transaction = new sql.Transaction(pool);
         await transaction.begin();
-        const request = new sql.Request(transaction);
 
-        // B1: Xóa Học Sinh trước (Con)
-        await request.query`DELETE FROM Hoc_Sinh WHERE Ma_HS = ${id}`;
-
-        // B2: Xóa Tài Khoản sau (Cha)
-        await request.query`DELETE FROM Dang_Nhap WHERE Ma_TK = ${id}`;
-
+        const request1 = new sql.Request(transaction);
+        await request1.query`DELETE FROM Diem WHERE Ma_HS = ${id}`;
+        const request2 = new sql.Request(transaction);
+        await request2.query`DELETE FROM Hoc_Sinh WHERE Ma_HS = ${id}`;
+        const request3 = new sql.Request(transaction);
+        await request3.query`DELETE FROM Dang_Nhap WHERE Ma_TK = ${id}`;
         await transaction.commit();
-        res.json({ success: true, message: 'Đã xóa thành công!' });
+        res.json({ success: true, message: 'Đã xóa thành công học sinh và toàn bộ bảng điểm liên quan!' });
 
     } catch (error) {
-        if(transaction && transaction._aborted === false) await transaction.rollback();
+        if(transaction) await transaction.rollback();
         console.error("❌ Lỗi xóa:", error);
-        res.status(500).json({ message: "Lỗi không thể xóa", error: error.message });
+        res.status(500).json({ 
+            success: false, 
+            message: "Lỗi hệ thống khi xóa dữ liệu", 
+            error: error.message 
+        });
     }
 };
 
-// --- CÁC HÀM TIỆN ÍCH KHÁC ---
+// --- Cho học sỉnh rời lớp ---
 const roiLop = async (req, res) => {
     const { id } = req.params;
     try {
@@ -257,17 +236,43 @@ const themVaoLop = async (req, res) => {
     const { Ma_HS, Ma_Lop } = req.body;
     try {
         const pool = await connectDB();
+
+        // 1. Kiểm tra lớp học có tồn tại không
+        const checkLop = await pool.request()
+            .input('Ma_Lop', Ma_Lop)
+            .query`SELECT Ma_Lop FROM Lop WHERE Ma_Lop = @Ma_Lop`;
         
-        // Kiểm tra Lớp tồn tại
-        const checkLop = await pool.request().query`SELECT Ma_Lop FROM Lop WHERE Ma_Lop = ${Ma_Lop}`;
         if (checkLop.recordset.length === 0) {
             return res.status(400).json({ message: 'Mã lớp không tồn tại!' });
         }
 
-        await pool.request().query`UPDATE Hoc_Sinh SET Ma_Lop = ${Ma_Lop} WHERE Ma_HS = ${Ma_HS}`;
+        // 2. Kiểm tra học sinh đã có lớp chưa
+        const checkHS = await pool.request()
+            .input('Ma_HS', Ma_HS)
+            .query`SELECT Ma_Lop FROM Hoc_Sinh WHERE Ma_HS = @Ma_HS`;
+
+        if (checkHS.recordset.length === 0) {
+            return res.status(404).json({ message: 'Không tìm thấy học sinh này!' });
+        }
+
+        // Kiểm tra nếu Ma_Lop không phải null hoặc không trống
+        if (checkHS.recordset[0].Ma_Lop) {
+            return res.status(400).json({ 
+                message: 'Học sinh này đã có lớp rồi, không thể thêm vào lớp mới!' 
+            });
+        }
+
+        // 3. Nếu chưa có lớp thì mới tiến hành cập nhật
+        await pool.request()
+            .input('Ma_Lop', Ma_Lop)
+            .input('Ma_HS', Ma_HS)
+            .query`UPDATE Hoc_Sinh SET Ma_Lop = @Ma_Lop WHERE Ma_HS = @Ma_HS`;
+
         res.json({ message: 'Đã thêm học sinh vào lớp thành công!' });
+
     } catch (error) {
-        res.status(500).json({ message: 'Lỗi server', error });
+        console.error(error);
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };
 

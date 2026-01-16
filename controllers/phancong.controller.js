@@ -1,7 +1,7 @@
 const Phan_Cong = require('../models/phancong.model');
 const { sql, connectDB } = require('../config/db');
 
-// 1. Lấy danh sách phân công (Đã sửa dùng pool)
+// --- Lấy danh sách phân công ---
 const getPhanCong = async (req, res) => {
     try {
         const pool = await connectDB();
@@ -26,74 +26,97 @@ const getPhanCong = async (req, res) => {
         res.status(500).json({ message: 'Lỗi server', error });
     }
 };
-
-// 2. Thêm phân công mới (Đã sửa dùng pool)
+//--- Thêm Phân Công mới ---
 const themPhanCong = async (req, res) => {
-    const { Ma_GV, Ma_Lop, Ma_MH, Ma_HK } = req.body; 
+    const { Ma_GV, Ma_Lop, Ma_HK } = req.body;
 
     try {
         const pool = await connectDB();
-        
-        // --- SỬA LỖI KIỂM TRA TRÙNG TẠI ĐÂY ---
-        const check = await pool.request().query`
-            SELECT Ma_PC FROM Phan_Cong 
-            WHERE Ma_Lop = ${Ma_Lop} AND Ma_MH = ${Ma_MH} AND Ma_HK = ${Ma_HK}
+        const gv = await pool.request().query`
+            SELECT Ma_MH FROM Giao_Vien WHERE Ma_GV = ${Ma_GV}
         `;
-        
-        if (check.recordset.length > 0) {
-            return res.status(400).json({ message: 'Lớp này đã được phân công môn này trong học kỳ này rồi!' });
+
+        if (gv.recordset.length === 0) {
+            return res.status(400).json({ message: 'Giáo viên không tồn tại!' });
         }
 
+        const Ma_MH = gv.recordset[0].Ma_MH;
+        const check = await pool.request().query`
+            SELECT Ma_PC FROM Phan_Cong
+            WHERE Ma_Lop = ${Ma_Lop}
+              AND Ma_MH = ${Ma_MH}
+              AND Ma_HK = ${Ma_HK}
+        `;
+
+        if (check.recordset.length > 0) {
+            return res.status(400).json({
+                message: 'Lớp này đã được phân công môn này trong học kỳ này!'
+            });
+        }
         await pool.request().query`
             INSERT INTO Phan_Cong (Ma_GV, Ma_Lop, Ma_MH, Ma_HK)
             VALUES (${Ma_GV}, ${Ma_Lop}, ${Ma_MH}, ${Ma_HK})
         `;
-        
+
         res.json({ message: 'Thêm phân công thành công!' });
+
     } catch (error) {
-        res.status(500).json({ message: 'Lỗi server: ' + error.message });
+        console.error('Lỗi thêm phân công:', error);
+        res.status(500).json({ message: 'Lỗi server', error });
     }
 };
 
-// 3. Sửa phân công (Đã sửa dùng pool)
+//--- Sửa phân công---
 const suaPhanCong = async (req, res) => {
     const { id } = req.params; // Ma_PC
-    const { Ma_GV, Ma_Lop, Ma_MH, Ma_HK } = req.body; 
+    const { Ma_GV, Ma_Lop, Ma_HK } = req.body;
 
     try {
         const pool = await connectDB();
-
-        // Bước 1: Kiểm tra trùng lặp (trừ chính nó ra)
-        const check = await pool.request().query`
-            SELECT * FROM Phan_Cong 
-            WHERE Ma_Lop = ${Ma_Lop} 
-              AND Ma_MH = ${Ma_MH} 
-              AND Ma_HK = ${Ma_HK}
-              AND Ma_PC != ${id} 
+        const hk = await pool.request().query`
+            SELECT Ma_HK FROM Hoc_Ky WHERE Ma_HK = ${Ma_HK}
         `;
-        
-        if (check.recordset.length > 0) {
-            return res.status(400).json({ message: 'Lỗi: Đã có phân công môn này cho lớp này trong học kỳ này rồi!' });
+        if (hk.recordset.length === 0) {
+            return res.status(400).json({ message: 'Học kỳ không tồn tại!' });
         }
-
-        // Bước 2: Thực hiện Update
+        const gv = await pool.request().query`
+            SELECT Ma_MH FROM Giao_Vien WHERE Ma_GV = ${Ma_GV}
+        `;
+        if (gv.recordset.length === 0) {
+            return res.status(400).json({ message: 'Giáo viên không tồn tại!' });
+        }
+        const Ma_MH = gv.recordset[0].Ma_MH;
+        const check = await pool.request().query`
+            SELECT Ma_PC FROM Phan_Cong
+            WHERE Ma_Lop = ${Ma_Lop}
+              AND Ma_MH = ${Ma_MH}
+              AND Ma_HK = ${Ma_HK}
+              AND Ma_PC != ${id}
+        `;
+        if (check.recordset.length > 0) {
+            return res.status(400).json({
+                message: 'Lớp này đã có giáo viên dạy môn này trong học kỳ!'
+            });
+        }
         await pool.request().query`
             UPDATE Phan_Cong
-            SET Ma_GV = ${Ma_GV}, 
-                Ma_Lop = ${Ma_Lop}, 
-                Ma_MH = ${Ma_MH}, 
+            SET Ma_GV = ${Ma_GV},
+                Ma_Lop = ${Ma_Lop},
+                Ma_MH = ${Ma_MH},
                 Ma_HK = ${Ma_HK}
             WHERE Ma_PC = ${id}
         `;
-        
+
         res.json({ message: 'Cập nhật phân công thành công!' });
+
     } catch (error) {
-        console.error("Lỗi sửa phân công:", error);
-        res.status(500).json({ message: 'Lỗi cập nhật dữ liệu', error });
+        console.error('Lỗi sửa phân công:', error);
+        res.status(500).json({ message: 'Lỗi server', error });
     }
 };
+  
 
-// 4. Xóa phân công (Đã sửa dùng pool)
+// --- Xóa phân công ---
 const xoaPhanCong = async (req, res) => {
     const { id } = req.params;
     try {

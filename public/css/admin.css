@@ -1,0 +1,12 @@
+.admin-card { 
+    transition: transform 0.3s; 
+    cursor: pointer; 
+}
+
+.admin-card:hover { 
+    transform: translateY(-5px); 
+}
+
+.admin-card i {
+    display: block;
+}

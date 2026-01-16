@@ -1,0 +1,97 @@
+Date : 2026-01-16 15:03:29
+Directory : d:\Web Quản Lý Học Sinh
+Total : 60 files,  5681 codes, 90 comments, 502 blanks, all 6273 lines
+
+Languages
++------------+------------+------------+------------+------------+------------+
+| language   | files      | code       | comment    | blank      | total      |
++------------+------------+------------+------------+------------+------------+
+| JavaScript |         40 |      2,337 |         90 |        356 |      2,783 |
+| JSON       |          2 |      2,078 |          0 |          1 |      2,079 |
+| HTML       |         12 |        996 |          0 |         87 |      1,083 |
+| PostCSS    |          5 |        181 |          0 |         32 |        213 |
+| MS SQL     |          1 |         89 |          0 |         26 |        115 |
++------------+------------+------------+------------+------------+------------+
+
+Directories
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                       | files      | code       | comment    | blank      | total      |
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                          |         60 |      5,681 |         90 |        502 |      6,273 |
+| . (Files)                                                  |          4 |      2,204 |          0 |         33 |      2,237 |
+| config                                                     |          1 |         23 |          0 |          3 |         26 |
+| controllers                                                |          9 |        924 |         43 |        146 |      1,113 |
+| models                                                     |          8 |         97 |          0 |          8 |        105 |
+| public                                                     |         29 |      2,360 |         45 |        290 |      2,695 |
+| public (Files)                                             |         12 |        996 |          0 |         87 |      1,083 |
+| public\css                                                 |          5 |        181 |          0 |         32 |        213 |
+| public\js                                                  |         12 |      1,183 |         45 |        171 |      1,399 |
+| routes                                                     |          9 |         73 |          2 |         22 |         97 |
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+| filename                                                   | language   | code       | comment    | blank      | total      |
++------------------------------------------------------------+------------+------------+------------+------------+------------+
+| d:\Web Quản Lý Học Sinh\Database.sql                       | MS SQL     |         89 |          0 |         26 |        115 |
+| d:\Web Quản Lý Học Sinh\config\db.js                       | JavaScript |         23 |          0 |          3 |         26 |
+| d:\Web Quản Lý Học Sinh\controllers\admin.controller.js    | JavaScript |         30 |          2 |          4 |         36 |
+| d:\Web Quản Lý Học Sinh\controllers\auth.controller.js     | JavaScript |        105 |          4 |         20 |        129 |
+| d:\Web Quản Lý Học Sinh\controllers\diem.controller.js     | JavaScript |         73 |          5 |         13 |         91 |
+| d:\Web Quản Lý Học Sinh\controllers\giaovien.controller.js | JavaScript |        147 |          7 |         38 |        192 |
+| d:\Web Quản Lý Học Sinh\controllers\hocky.controller.js    | JavaScript |         31 |          2 |          3 |         36 |
+| d:\Web Quản Lý Học Sinh\controllers\hocsinh.controller.js  | JavaScript |        244 |         12 |         33 |        289 |
+| d:\Web Quản Lý Học Sinh\controllers\lop.controller.js      | JavaScript |        104 |          4 |         15 |        123 |
+| d:\Web Quản Lý Học Sinh\controllers\monhoc.controller.js   | JavaScript |         72 |          3 |          6 |         81 |
+| d:\Web Quản Lý Học Sinh\controllers\phancong.controller.js | JavaScript |        118 |          4 |         14 |        136 |
+| d:\Web Quản Lý Học Sinh\models\auth.model.js               | JavaScript |         10 |          0 |          1 |         11 |
+| d:\Web Quản Lý Học Sinh\models\diem.model.js               | JavaScript |         16 |          0 |          1 |         17 |
+| d:\Web Quản Lý Học Sinh\models\giaovien.model.js           | JavaScript |         14 |          0 |          1 |         15 |
+| d:\Web Quản Lý Học Sinh\models\hocky.model.js              | JavaScript |         11 |          0 |          1 |         12 |
+| d:\Web Quản Lý Học Sinh\models\hocsinh.model.js            | JavaScript |         14 |          0 |          1 |         15 |
+| d:\Web Quản Lý Học Sinh\models\lop.model.js                | JavaScript |         11 |          0 |          1 |         12 |
+| d:\Web Quản Lý Học Sinh\models\monhoc.model.js             | JavaScript |          9 |          0 |          1 |         10 |
+| d:\Web Quản Lý Học Sinh\models\phancong.model.js           | JavaScript |         12 |          0 |          1 |         13 |
+| d:\Web Quản Lý Học Sinh\package-lock.json                  | JSON       |      2,055 |          0 |          1 |      2,056 |
+| d:\Web Quản Lý Học Sinh\package.json                       | JSON       |         23 |          0 |          0 |         23 |
+| d:\Web Quản Lý Học Sinh\public\admin.html                  | HTML       |         78 |          0 |         10 |         88 |
+| d:\Web Quản Lý Học Sinh\public\css\admin.css               | PostCSS    |         10 |          0 |          2 |         12 |
+| d:\Web Quản Lý Học Sinh\public\css\ds_hocsinh.css          | PostCSS    |         25 |          0 |          4 |         29 |
+| d:\Web Quản Lý Học Sinh\public\css\ds_lop.css              | PostCSS    |         12 |          0 |          2 |         14 |
+| d:\Web Quản Lý Học Sinh\public\css\login.css               | PostCSS    |         99 |          0 |         18 |        117 |
+| d:\Web Quản Lý Học Sinh\public\css\so.diem.css             | PostCSS    |         35 |          0 |          6 |         41 |
+| d:\Web Quản Lý Học Sinh\public\diem.html                   | HTML       |         59 |          0 |          5 |         64 |
+| d:\Web Quản Lý Học Sinh\public\ds.giaovien.html            | HTML       |        113 |          0 |          8 |        121 |
+| d:\Web Quản Lý Học Sinh\public\ds_hocsinh.html             | HTML       |        124 |          0 |          9 |        133 |
+| d:\Web Quản Lý Học Sinh\public\ds_lop.html                 | HTML       |         84 |          0 |          8 |         92 |
+| d:\Web Quản Lý Học Sinh\public\ds_monhoc.html              | HTML       |         77 |          0 |          7 |         84 |
+| d:\Web Quản Lý Học Sinh\public\giaovien.html               | HTML       |         82 |          0 |          7 |         89 |
+| d:\Web Quản Lý Học Sinh\public\hocsinh.html                | HTML       |         78 |          0 |          5 |         83 |
+| d:\Web Quản Lý Học Sinh\public\hs_bangdiem.html            | HTML       |         75 |          0 |          5 |         80 |
+| d:\Web Quản Lý Học Sinh\public\js\admin.js                 | JavaScript |         18 |          8 |          4 |         30 |
+| d:\Web Quản Lý Học Sinh\public\js\diem.js                  | JavaScript |         94 |          0 |         10 |        104 |
+| d:\Web Quản Lý Học Sinh\public\js\ds.giaovien.js           | JavaScript |        134 |          5 |         22 |        161 |
+| d:\Web Quản Lý Học Sinh\public\js\ds_hocsinh.js            | JavaScript |        197 |          9 |         32 |        238 |
+| d:\Web Quản Lý Học Sinh\public\js\ds_lop.js                | JavaScript |        120 |          3 |          8 |        131 |
+| d:\Web Quản Lý Học Sinh\public\js\ds_monhoc.js             | JavaScript |         96 |          3 |         15 |        114 |
+| d:\Web Quản Lý Học Sinh\public\js\giaovien.js              | JavaScript |         51 |          2 |         11 |         64 |
+| d:\Web Quản Lý Học Sinh\public\js\hocsinh.js               | JavaScript |         89 |          3 |          9 |        101 |
+| d:\Web Quản Lý Học Sinh\public\js\hs_bangdiem.js           | JavaScript |         78 |          2 |         14 |         94 |
+| d:\Web Quản Lý Học Sinh\public\js\login.js                 | JavaScript |         61 |          2 |         13 |         76 |
+| d:\Web Quản Lý Học Sinh\public\js\phancong.js              | JavaScript |        117 |          3 |         15 |        135 |
+| d:\Web Quản Lý Học Sinh\public\js\taikhoan.js              | JavaScript |        128 |          5 |         18 |        151 |
+| d:\Web Quản Lý Học Sinh\public\login.html                  | HTML       |         31 |          0 |          5 |         36 |
+| d:\Web Quản Lý Học Sinh\public\phancong.html               | HTML       |         86 |          0 |          6 |         92 |
+| d:\Web Quản Lý Học Sinh\public\taikhoan.html               | HTML       |        109 |          0 |         12 |        121 |
+| d:\Web Quản Lý Học Sinh\routes\admin.route.js              | JavaScript |          6 |          0 |          1 |          7 |
+| d:\Web Quản Lý Học Sinh\routes\auth.route.js               | JavaScript |          8 |          0 |          2 |         10 |
+| d:\Web Quản Lý Học Sinh\routes\diem.route.js               | JavaScript |          6 |          0 |          3 |          9 |
+| d:\Web Quản Lý Học Sinh\routes\giaovien.route.js           | JavaScript |          9 |          0 |          4 |         13 |
+| d:\Web Quản Lý Học Sinh\routes\hocky.route.js              | JavaScript |          6 |          0 |          2 |          8 |
+| d:\Web Quản Lý Học Sinh\routes\hocsinh.route.js            | JavaScript |         13 |          1 |          2 |         16 |
+| d:\Web Quản Lý Học Sinh\routes\lop.route.js                | JavaScript |          9 |          0 |          4 |         13 |
+| d:\Web Quản Lý Học Sinh\routes\monhoc.route.js             | JavaScript |          8 |          0 |          2 |         10 |
+| d:\Web Quản Lý Học Sinh\routes\phancong.route.js           | JavaScript |          8 |          1 |          2 |         11 |
+| d:\Web Quản Lý Học Sinh\server.js                          | JavaScript |         37 |          0 |          6 |         43 |
+| Total                                                      |            |      5,681 |         90 |        502 |      6,273 |
++------------------------------------------------------------+------------+------------+------------+------------+------------+

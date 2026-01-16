@@ -4,15 +4,40 @@
     <meta charset="UTF-8">
     <title>Trang Giáo Viên</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     <style>
-        .card { border: none; transition: transform 0.2s; border-radius: 10px; }
-        .card:hover { transform: translateY(-5px); }
-        .card-header { font-weight: bold; text-transform: uppercase; border-radius: 10px 10px 0 0 !important; }
-        .navbar-brand { letter-spacing: 1px; }
-        .list-group-item-action:hover { background-color: #f8f9fa; }
-        #lbl-tengv { transition: opacity 0.5s; }
+        .card { 
+            border: none; 
+            transition: transform 0.2s; 
+            border-radius: 10px; 
+        }
+        .card:hover { 
+            transform: translateY(-5px); 
+        }
+        .card-header { 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            border-radius: 10px 10px 0 0 !important; 
+        }
+        .navbar-brand { 
+            letter-spacing: 1px; 
+        }
+        .list-group-item-action:hover { 
+            background-color: #f8f9fa; 
+        }
+        #lbl-tengv { 
+            transition: opacity 0.5s; 
+        }
+        .fst-italic { 
+            font-style: italic; 
+        }
+        /* Tùy chỉnh thêm cho đẹp mắt */
+        .badge {
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -59,101 +84,6 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const user = JSON.parse(localStorage.getItem('userCurrent'));
-            
-            // 1. Kiểm tra quyền truy cập
-            if (!user || user.Loai_TK !== 'GiaoVien') 
-                return location.href = 'login.html';
-            
-            const labelTen = document.getElementById('lbl-tengv');
-
-            try {
-                // 2. Gọi API lấy dữ liệu lớp và thông tin cá nhân
-                const res = await fetch(`/api/giaovien/lop-phu-trach/${user.Ma_TK}`);
-                if (!res.ok) throw new Error("Lỗi tải dữ liệu");
-                const data = await res.json();
-
-                // 3. HIỂN THỊ TÊN GIÁO VIÊN
-                // Lấy Ten_GV từ Database thông qua API trả về
-                let tenHienThi = "";
-                if (data.lopChuNhiem && data.lopChuNhiem.Ten_GV) {
-                    tenHienThi = data.lopChuNhiem.Ten_GV;
-                } else if (data.lopGiangDay && data.lopGiangDay.length > 0 && data.lopGiangDay[0].Ten_GV) {
-                    tenHienThi = data.lopGiangDay[0].Ten_GV;
-                } else {
-                    tenHienThi = `Thầy/Cô (${user.Ma_TK})`; // Quay lại dùng mã nếu ko tìm thấy tên
-                }
-                
-                labelTen.innerHTML = `<i class="fas fa-user-circle me-2"></i>Xin chào Thầy/Cô ${tenHienThi}`;
-
-                // 4. Xử lý Lớp Chủ Nhiệm
-                const boxCN = document.getElementById('box-chunhiem');
-                if (data.lopChuNhiem) {
-                    boxCN.innerHTML = `
-                        <h2 class="display-5 fw-bold text-dark mb-3">${data.lopChuNhiem.Ten_Lop}</h2>
-                        <button class="btn btn-primary fw-bold shadow-sm px-4"
-                            onclick="chonLopCN('${data.lopChuNhiem.Ma_Lop}')">
-                            <i class="fas fa-users-cog me-2"></i>Quản Lý Lớp
-                        </button>
-                    `;
-                } else {
-                    boxCN.innerHTML = `
-                        <i class="fas fa-info-circle fa-3x text-muted mb-3"></i>
-                        <span class="text-muted fw-bold">Thầy/Cô hiện không chủ nhiệm lớp nào</span>
-                    `;
-                }
-
-                // 5. Xử lý Lớp Giảng Dạy
-                const listGD = document.getElementById('list-giangday');
-                listGD.innerHTML = '';
-
-                if (data.lopGiangDay && data.lopGiangDay.length > 0) {
-                    data.lopGiangDay.forEach(lop => {
-                        listGD.innerHTML += `
-                            <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 border-start-0 border-end-0"
-                                onclick="vaoChamDiem('${lop.Ma_Lop}', '${lop.Ma_MH}')">
-                                <div>
-                                    <i class="fas fa-users text-secondary me-2"></i>
-                                    <span>Lớp: <strong class="text-dark">${lop.Ten_Lop}</strong></span>
-                                </div>
-                                <div class="text-end">
-                                    <span class="badge bg-info text-dark shadow-sm me-2 px-3">${lop.Ten_MH}</span>
-                                    <i class="fas fa-chevron-right text-muted small"></i>
-                                </div>
-                            </button>
-                        `;
-                    });
-                } else {
-                    listGD.innerHTML = '<div class="p-5 text-center text-muted italic">Chưa có lịch phân công giảng dạy</div>';
-                }
-
-            } catch (error) {
-                console.error(error);
-                labelTen.innerHTML = `<i class="fas fa-exclamation-triangle text-danger me-2"></i>Lỗi kết nối dữ liệu`;
-                document.getElementById('box-chunhiem').innerHTML = "Lỗi tải dữ liệu";
-            }
-        });
-
-        function vaoChamDiem(maLop, maMH) {
-            localStorage.setItem('cur_MaLop', maLop);
-            localStorage.setItem('cur_MaMH', maMH);
-            window.location.href = 'diem.html';
-        }
-
-        function chonLopCN(maLop) {
-            localStorage.setItem('selectedClass', maLop);
-            window.location.href = 'hocsinh.html';
-        }
-
-        function dangXuat() {
-            if(confirm('Xác nhận đăng xuất khỏi hệ thống?')) {
-                localStorage.clear();
-                location.href = 'login.html';
-            }
-        }
-    </script>
+    <script src="js/giaovien.js"></script>
 </body>
 </html>

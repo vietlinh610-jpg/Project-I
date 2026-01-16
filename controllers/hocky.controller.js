@@ -1,12 +1,9 @@
 const Hoc_Ky = require('../models/hocky.model');
 const { sql, connectDB } = require('../config/db');
-
-// 1. Lấy danh sách Học Kỳ
+// --- Lấy danh sách học kỳ---
 const getHocky = async (req, res) => {
     try {
-        const pool = await connectDB(); // Lấy kết nối pool
-        
-        // Sắp xếp giảm dần để học kỳ mới nhất hiện lên đầu
+        const pool = await connectDB(); 
         const result = await pool.request().query`
             SELECT * FROM Hoc_Ky 
             ORDER BY Nam_Hoc DESC, Ma_HK DESC
@@ -19,7 +16,7 @@ const getHocky = async (req, res) => {
     }
 };
 
-// 2. Lấy phân công (Lưu ý: File phancong.controller.js đã có hàm chi tiết hơn)
+// ----  Lấy phân công ---
 const getPhanCong = async (req, res) => {
     try {
         const pool = await connectDB();

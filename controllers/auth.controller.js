@@ -1,12 +1,12 @@
 const { sql, connectDB } = require('../config/db');
 const TaiKhoan = require('../models/auth.model'); 
 
-// 1. Đăng Nhập (Đã cập nhật dùng Pool)
+// --- Đăng Nhập ---
 const login = async (req, res) => {
     const { Ten_TK, Mat_Khau } = req.body;
 
     try {
-        const pool = await connectDB(); // Lấy kết nối pool
+        const pool = await connectDB(); 
         
         const result = await pool.request().query`
             SELECT * FROM Dang_Nhap 
@@ -35,7 +35,7 @@ const login = async (req, res) => {
     }
 };
 
-// 2. Lấy danh sách Tài khoản GV
+// --- Lấy danh sách Tài khoản GV ---
 const getTaiKhoanGV = async (req, res) => {
     try {
         const pool = await connectDB();
@@ -48,7 +48,7 @@ const getTaiKhoanGV = async (req, res) => {
     } catch (e) { res.status(500).json(e); }
 };
 
-// 3. Lấy danh sách Tài khoản HS
+// --- Lấy danh sách Tài khoản HS ---
 const getTaiKhoanHS = async (req, res) => {
     const { maLop } = req.params;
     try {
@@ -63,14 +63,10 @@ const getTaiKhoanHS = async (req, res) => {
     } catch (e) { res.status(500).json(e); }
 };
 
-// --- 4. CẬP NHẬT TÀI KHOẢN (ĐÃ SỬA ĐỂ KHÔNG BỊ LỖI 400) ---
- // --- 4. CẬP NHẬT TÀI KHOẢN & SỐ ĐIỆN THOẠI ---
+ // ---  Cập nhật tài khoản ---
 const capNhatTaiKhoan = async (req, res) => {
-    // Nhận thêm biến sdtMoi (nếu bạn muốn SĐT khác mật khẩu, còn không thì dùng luôn matKhauMoi)
-    // Ở đây mình giả định bạn muốn Mật khẩu mới chính là SĐT mới luôn (logic phổ biến ở trường học)
     const { maTK, matKhauMoi } = req.body; 
 
-    // Kiểm tra dữ liệu
     if (!maTK) {
         return res.status(400).json({ message: 'Thiếu Mã Tài Khoản (maTK)!' });
     }
@@ -78,7 +74,6 @@ const capNhatTaiKhoan = async (req, res) => {
         return res.status(400).json({ message: 'Mật khẩu/SĐT mới không được để trống!' });
     }
 
-    // 1. LẤY KẾT NỐI
     let pool;
     try {
         pool = await connectDB();
@@ -86,13 +81,10 @@ const capNhatTaiKhoan = async (req, res) => {
         return res.status(500).json({ message: "Lỗi kết nối Database" });
     }
 
-    // 2. TẠO TRANSACTION (Quan trọng)
     const transaction = new sql.Transaction(pool);
 
     try {
-        await transaction.begin(); // Bắt đầu giao dịch
-
-        // --- BƯỚC 1: Cập nhật Mật khẩu bảng DANG_NHAP ---
+        await transaction.begin(); 
         const request1 = new sql.Request(transaction);
         await request1.query`
             UPDATE Dang_Nhap 
@@ -100,8 +92,7 @@ const capNhatTaiKhoan = async (req, res) => {
             WHERE Ma_TK = ${maTK}
         `;
 
-        // --- BƯỚC 2: Cập nhật SĐT bảng HOC_SINH ---
-        // (Nếu maTK là học sinh thì dòng này có tác dụng, nếu là GV thì dòng này update 0 row - không lỗi)
+        
         const request2 = new sql.Request(transaction);
         await request2.query`
             UPDATE Hoc_Sinh 
@@ -109,8 +100,6 @@ const capNhatTaiKhoan = async (req, res) => {
             WHERE Ma_HS = ${maTK}
         `;
 
-        // --- BƯỚC 3: Cập nhật SĐT bảng GIAO_VIEN ---
-        // (Tương tự, chỉ chạy nếu maTK là giáo viên)
         const request3 = new sql.Request(transaction);
         await request3.query`
             UPDATE Giao_Vien 
@@ -118,13 +107,12 @@ const capNhatTaiKhoan = async (req, res) => {
             WHERE Ma_GV = ${maTK}
         `;
 
-        // 3. XÁC NHẬN GIAO DỊCH
+    
         await transaction.commit();
         
         res.json({ success: true, message: 'Đã cập nhật Mật khẩu và SĐT thành công!' });
 
     } catch (e) { 
-        // Nếu lỗi thì hoàn tác tất cả
         if (transaction._aborted === false) {
              await transaction.rollback();
         }

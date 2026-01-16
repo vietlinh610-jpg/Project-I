@@ -1,0 +1,29 @@
+.class-card { 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    height: 160px; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center; 
+    align-items: center; 
+    border: none;
+    background-color: white;
+}
+
+.class-card:hover { 
+    transform: translateY(-5px); 
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; 
+}
+
+.hidden { 
+    display: none !important; 
+}
+
+.table th, .table td { 
+    vertical-align: middle; 
+    white-space: nowrap; 
+}
+
+.cursor-wait { 
+    cursor: wait; 
+}

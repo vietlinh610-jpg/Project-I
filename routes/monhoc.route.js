@@ -4,5 +4,6 @@ const controller = require('../controllers/monhoc.controller');
 router.get('/',controller.getMon);
 router.post('/',controller.themMon);
 router.delete('/:id',controller.xoaMon);
+router.put('/:id', controller.suaMon);
 
 module.exports = router;

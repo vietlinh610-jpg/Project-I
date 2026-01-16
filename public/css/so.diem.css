@@ -1,0 +1,41 @@
+.table th { 
+    vertical-align: middle; 
+    background-color: #f8f9fa; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    font-size: 0.85rem; 
+}
+
+.table td { 
+    vertical-align: middle; 
+}
+
+.card { 
+    border: none; 
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); 
+}
+
+.navbar-brand { 
+    font-weight: bold; 
+    letter-spacing: 1px; 
+}
+
+.input-score { 
+    width: 70px; 
+    margin: 0 auto; 
+    border-radius: 4px; 
+    border: 1px solid #ced4da; 
+    transition: all 0.2s; 
+}
+
+.input-score:focus { 
+    border-color: #0d6efd; 
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15); 
+    outline: none; 
+}
+
+.total-score { 
+    font-weight: 800; 
+    color: #0d6efd; 
+    font-size: 1.1rem; 
+}
