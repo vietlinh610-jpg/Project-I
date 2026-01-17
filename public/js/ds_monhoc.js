@@ -94,10 +94,10 @@ async function xoa(id) {
         try {
             const res = await fetch(`/api/monhoc/${id}`, { method: 'DELETE' }); 
             if (res.ok) {
-                alert("✅ Đã xóa thành công!");
+                alert("✅ Xóa thành công");
                 load(); 
             } else {
-                alert("❌ Không thể xóa (Có thể môn này đang có dữ liệu liên quan).");
+                alert("❌ Môn học này đang có giáo viên giảng dạy");
             }
         } catch (e) { 
             alert("Lỗi kết nối server"); 

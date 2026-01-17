@@ -34,24 +34,39 @@ const themMon =  async(req,res) =>
     }
 };
 
-// --- Xóa môn học---
-const xoaMon =  async(req,res) =>
-{
-    const { id } = req.params;
-    try
-    {
+//--- Xóa Môn---
+const xoaMon = async (req, res) => {
+    const { id } = req.params; 
+    try {
         await connectDB();
+        const checkGV = await sql.query`
+            SELECT TOP 1 Ma_GV FROM Giao_Vien WHERE Ma_MH = ${id}
+        `;
+
+        if (checkGV.recordset.length > 0) {
+            return res.status(400).json({
+                message: "Không thể xóa môn học! Đang có giáo viên dạy môn này. Vui lòng xóa tài khoản giáo viên trước."
+            });
+        }
+
+        
+        await sql.query`
+            DELETE FROM Diem
+            WHERE Ma_MH = ${id}
+        `;
         const result = await sql.query`
-        DELETE FROM Mon_Hoc
-        WHERE Ma_MH = ${id}
-        `
-        res.json(result.recordset);
-    }catch(error)
-    {
-        res.status(500).json(error);
+            DELETE FROM Mon_Hoc 
+            WHERE Ma_MH = ${id}
+        `;
+
+        res.json({ message: "Đã xóa bảng điểm và môn học thành công!" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Lỗi hệ thống", error: error.message });
     }
 };
-
+//--- Sửa môn---
 const suaMon = async (req, res) => {
     const { id } = req.params; 
     const { Ten_MH } = req.body; 
